@@ -1,63 +1,64 @@
 {
-  "expo": {
-    "name": "FinTrack",
-    "slug": "fintrack",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#6366f1"
-    },
-    "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/01501764-cd15-46c2-8ab0-ea612a704e9f"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "co.ke.awesome.financeapp",
-      "infoPlist": {
-        "NSUserNotificationAlertUsageDescription": "This app uses notifications to keep you updated on your finances."
-      }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#6366f1"
-      },
-      "package": "co.ke.awesome.financeapp",
-      "googleMobileAdsAppId": "ca-app-pub-1595924632810821~4873351440",
-      "versionCode": 1,
-      "permissions": [
-        "NOTIFICATIONS"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/images/icon.png"
-    },
-    "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "01501764-cd15-46c2-8ab0-ea612a704e9f"
-      }
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#6366f1",
-          "sounds": []
-        }
-      ]
-    ],
-    "runtimeVersion": "1.0.0"
-  }
+    "expo": {
+        "name": "FinTrack",
+        "slug": "fintrack",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/icon.png",
+        "splash": {
+            "image": "./assets/images/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#6366f1"
+        },
+        "updates": {
+            "fallbackToCacheTimeout": 0,
+            "url": "https://u.expo.dev/01501764-cd15-46c2-8ab0-ea612a704e9f"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "co.ke.awesome.financeapp",
+            "infoPlist": {
+                "NSUserNotificationAlertUsageDescription": "This app uses notifications to keep you updated on your finances."
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/images/icon.png",
+                "backgroundColor": "#6366f1"
+            },
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "package": "co.ke.awesome.financeapp",
+            "googleMobileAdsAppId": "ca-app-pub-1595924632810821~4873351440",
+            "versionCode": 1,
+            "permissions": [
+                "NOTIFICATIONS"
+            ]
+        },
+        "web": {
+            "favicon": "./assets/images/icon.png"
+        },
+        "extra": {
+            "router": {
+                "origin": false
+            },
+            "eas": {
+                "projectId": "01501764-cd15-46c2-8ab0-ea612a704e9f"
+            }
+        },
+        "plugins": [
+            "expo-router", [
+                "expo-notifications",
+                {
+                    "icon": "./assets/images/icon.png",
+                    "color": "#6366f1",
+                    "sounds": []
+                }
+            ]
+        ],
+        "runtimeVersion": "1.0.0"
+    }
 }

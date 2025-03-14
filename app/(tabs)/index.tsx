@@ -10,8 +10,11 @@ import TransactionItem from "../components/TransactionItem"
 import { useFinance } from "../context/FinanceContext"
 import Chart from "../components/Chart"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { StatusBar } from "expo-status-bar"
+
 
 const HomeScreen = () => {
+ 
   // Remove navigation prop
   const { colors } = useTheme()
   const { transactions, totalIncome, totalExpenses, balance } = useFinance()
@@ -165,7 +168,10 @@ const HomeScreen = () => {
   })
 
   return (
+    <>
+    <StatusBar style="inverted" backgroundColor={colors.primary} />
     <SafeAreaView style={styles.container}>
+
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.monthYear}>{getCurrentMonthYear()}</Text>
@@ -254,6 +260,8 @@ const HomeScreen = () => {
         <Plus size={24} color={colors.card} />
       </TouchableOpacity>
     </SafeAreaView>
+
+    </>
   )
 }
 

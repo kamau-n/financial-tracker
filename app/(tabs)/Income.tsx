@@ -150,7 +150,7 @@ const Income = () => {
       color: colors.text,
     },
     saveButton: {
-      backgroundColor: colors.success,
+      backgroundColor: colors.primary,
       borderRadius: 8,
       padding: 16,
       alignItems: "center",

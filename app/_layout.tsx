@@ -8,6 +8,7 @@ import { useColorScheme as useRNColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from './context/ThemeContext';
 import { FinanceProvider } from './context/FinanceContext';
+import { Colors } from '@/constants/Colors';
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +31,7 @@ export default function RootLayout() {
   }
 
   return (
+    <>
     <SafeAreaProvider>
       <ThemeProvider>
         <FinanceProvider>
@@ -38,10 +40,10 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />
             </Stack>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
           </NavigationThemeProvider>
         </FinanceProvider>
       </ThemeProvider>
     </SafeAreaProvider>
+    </>
   );
 }

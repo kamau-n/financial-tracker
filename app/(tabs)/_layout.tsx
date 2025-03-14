@@ -1,12 +1,15 @@
 import { Tabs } from 'expo-router';
-import { Home, DollarSign, PieChart, Settings } from 'lucide-react-native';
+import { Home, DollarSign, PieChart, Settings, CircleDashed } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { StatusBar } from 'expo-status-bar';
 
 export default function TabLayout() {
   const { colors } = useTheme();
 
   return (
-    <Tabs
+    <>
+    <StatusBar style="dark" backgroundColor ={colors.primary} />
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: 'gray',
@@ -25,7 +28,7 @@ export default function TabLayout() {
         name="income"
         options={{
           title: 'Income',
-          tabBarIcon: ({ color, size }) => <DollarSign color={"white"} size={size} />,
+          tabBarIcon: ({ color, size }) => <CircleDashed color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -43,5 +46,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </>
+  
   );
 }

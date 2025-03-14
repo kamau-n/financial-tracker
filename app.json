@@ -18,14 +18,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "awesome.co.ke"
+      "bundleIdentifier": "co.ke.awesome.financeapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#6366f1"
       },
-      "package": "com.awesome.co.ke",
+      "package": "co.ke.awesome.financeapp",
       "versionCode": 1,
       "permissions": []
     },
@@ -36,6 +36,9 @@
       "eas": {
         "projectId": "01501764-cd15-46c2-8ab0-ea612a704e9f"
       }
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

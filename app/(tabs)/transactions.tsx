@@ -50,6 +50,18 @@ const Transactions = () => {
     }
   }
 
+  const resetForm = () => {
+    setAmount(0)
+    setDescription("")
+    setDate(new Date())
+    setCategoryId(undefined)
+    setSubCategoryId(undefined)
+    setTransactionType("expense")
+    setIsEditing(false)
+    setEditingTransaction(null)
+    setIsAddingTransaction(false)
+  }
+
   const handleSave = () => {
     if (amount <= 0) {
       // Show error
@@ -79,14 +91,7 @@ const Transactions = () => {
     }
 
     // Reset form and hide it
-    setAmount(0)
-    setDescription("")
-    setDate(new Date())
-    setCategoryId(undefined)
-    setSubCategoryId(undefined)
-    setIsAddingTransaction(false)
-    setIsEditing(false)
-    setEditingTransaction(null)
+    resetForm()
   }
 
   const handleTransactionPress = (transaction: Transaction) => {
@@ -101,6 +106,15 @@ const Transactions = () => {
     setDate(new Date(transaction.date))
     setCategoryId(transaction.categoryId)
     setSubCategoryId(transaction.subCategoryId)
+  }
+
+  const handleAddNewTransaction = () => {
+    resetForm() // Reset form before showing it
+    setIsAddingTransaction(true)
+  }
+
+  const handleCancel = () => {
+    resetForm()
   }
 
   const styles = StyleSheet.create({
@@ -283,7 +297,7 @@ const Transactions = () => {
           </View>
 
           {!isAddingTransaction ? (
-            <TouchableOpacity style={styles.addButton} onPress={() => setIsAddingTransaction(true)}>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddNewTransaction}>
               <Text style={styles.addButtonText}>Add New Transaction</Text>
             </TouchableOpacity>
           ) : (
@@ -344,7 +358,7 @@ const Transactions = () => {
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <TouchableOpacity
                   style={[styles.saveButton, { flex: 1, backgroundColor: colors.border }]}
-                  onPress={() => setIsAddingTransaction(false)}
+                  onPress={handleCancel}
                 >
                   <Text style={[styles.saveButtonText, { color: colors.text }]}>Cancel</Text>
                 </TouchableOpacity>

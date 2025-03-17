@@ -27,17 +27,17 @@ const HomeScreen = () => {
     .slice(0, 5)
 
   const handleAddTransaction = () => {
-    router.push("/Expenses") // Use router.push instead of navigation.navigate
+    router.push("/Transactions") // Use router.push instead of navigation.navigate
   }
 
   const handleViewAllTransactions = () => {
-    router.push("/Expenses")
+    router.push("/Transactions")
   }
 
   const handleTransactionPress = (transaction) => {
     // For editing a transaction, you can pass the ID as a parameter
     router.push({
-      pathname: "/Expenses",
+      pathname: "/Transactions",
       params: { editTransaction: transaction.id },
     })
   }

@@ -11,7 +11,8 @@
       "backgroundColor": "#6366f1"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/01501764-cd15-46c2-8ab0-ea612a704e9f"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -39,6 +40,7 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "runtimeVersion": "1.0.0"
   }
 }

@@ -6,10 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 import { defaultCategories } from "../utils/categories"
-import { ExpenseCategory, SubCategory, Transaction } from "../utils/types"
-
-// Define types
-
+import type { ExpenseCategory, SubCategory, Transaction, Debt, Payment, FinanceContextType } from "../utils/types"
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined)
 
@@ -23,6 +20,7 @@ export const useFinance = () => {
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [debts, setDebts] = useState<Debt[]>([])
   const [categories, setCategories] = useState<ExpenseCategory[]>([])
   const [totalIncome, setTotalIncome] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
@@ -33,27 +31,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const loadData = async () => {
       try {
         const storedTransactions = await AsyncStorage.getItem("transactions")
+        const storedDebts = await AsyncStorage.getItem("debts")
         let storedCategories = await AsyncStorage.getItem("categories")
-
-        console.log("storedTransactions", storedTransactions)
-        console.log("storedCategories", storedCategories)
 
         if (storedTransactions) {
           setTransactions(JSON.parse(storedTransactions))
         }
 
-        //ts-ignore
+        if (storedDebts) {
+          setDebts(JSON.parse(storedDebts))
+        }
 
-        setCategories!=null ? storedCategories = JSON.parse(storedCategories) : null
-
-        if (setCategories!=null && storedCategories &&  storedCategories?.length>0) {
-          console.log("storedCategories selected", storedCategories)
+        if (storedCategories) {
           setCategories(JSON.parse(storedCategories))
         } else {
-          // Set default categories if none exist
-       
-          setCategories (defaultCategories)
-          console.log("defaultCategories selected", categories)
+          setCategories(defaultCategories)
           await AsyncStorage.setItem("categories", JSON.stringify(defaultCategories))
         }
       } catch (error) {
@@ -67,18 +59,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Calculate totals whenever transactions change
   useEffect(() => {
     const income = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
-
     const expenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
 
     setTotalIncome(income)
     setTotalExpenses(expenses)
     setBalance(income - expenses)
 
-    // Save transactions to AsyncStorage
     AsyncStorage.setItem("transactions", JSON.stringify(transactions)).catch((error) =>
       console.error("Error saving transactions:", error),
     )
   }, [transactions])
+
+  // Save debts whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("debts", JSON.stringify(debts)).catch((error) =>
+      console.error("Error saving debts:", error),
+    )
+  }, [debts])
 
   // Save categories whenever they change
   useEffect(() => {
@@ -103,95 +100,84 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setTransactions((prev) => prev.map((t) => (t.id === transaction.id ? transaction : t)))
   }
 
-  const addCategory = (category: Omit<ExpenseCategory, "id" | "subCategories">) => {
-    const newCategory = {
-      ...category,
+  const addDebt = (debt: Omit<Debt, "id" | "payments">) => {
+    const newDebt = {
+      ...debt,
       id: Date.now().toString(),
-      subCategories: [],
+      payments: [],
     }
-    setCategories((prev) => [...prev, newCategory])
+    setDebts((prev) => [...prev, newDebt])
   }
 
-  const deleteCategory = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id))
-    // Also remove transactions with this category
-    setTransactions((prev) => prev.filter((t) => t.categoryId !== id))
+  const updateDebt = (debt: Debt) => {
+    setDebts((prev) => prev.map((d) => (d.id === debt.id ? debt : d)))
   }
 
-  const updateCategory = (category: ExpenseCategory) => {
-    setCategories((prev) => prev.map((c) => (c.id === category.id ? category : c)))
+  const deleteDebt = (id: string) => {
+    setDebts((prev) => prev.filter((d) => d.id !== id))
   }
 
-  const addSubCategory = (subCategory: Omit<SubCategory, "id">) => {
-    const newSubCategory = {
-      ...subCategory,
+  const addPayment = (debtId: string, payment: Omit<Payment, "id">) => {
+    const newPayment = {
+      ...payment,
       id: Date.now().toString(),
     }
 
-    setCategories((prev) =>
-      prev.map((c) => {
-        if (c.id === subCategory.parentId) {
+    setDebts((prev) =>
+      prev.map((debt) => {
+        if (debt.id === debtId) {
+          const updatedPayments = [...debt.payments, newPayment]
+          const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0)
+          
           return {
-            ...c,
-            subCategories: [...c.subCategories, newSubCategory],
+            ...debt,
+            payments: updatedPayments,
+            status: totalPaid >= debt.amount ? "paid" : totalPaid > 0 ? "partially_paid" : "pending",
           }
         }
-        return c
+        return debt
       }),
     )
   }
 
-  const deleteSubCategory = (id: string) => {
-    setCategories((prev) =>
-      prev.map((c) => ({
-        ...c,
-        subCategories: c.subCategories.filter((sc) => sc.id !== id),
-      })),
-    )
-
-    // Also remove transactions with this subcategory
-    setTransactions((prev) => prev.filter((t) => t.subCategoryId !== id))
-  }
-
-  const updateSubCategory = (subCategory: SubCategory) => {
-    setCategories((prev) =>
-      prev.map((c) => {
-        if (c.id === subCategory.parentId) {
+  const deletePayment = (debtId: string, paymentId: string) => {
+    setDebts((prev) =>
+      prev.map((debt) => {
+        if (debt.id === debtId) {
+          const updatedPayments = debt.payments.filter((p) => p.id !== paymentId)
+          const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0)
+          
           return {
-            ...c,
-            subCategories: c.subCategories.map((sc) => (sc.id === subCategory.id ? subCategory : sc)),
+            ...debt,
+            payments: updatedPayments,
+            status: totalPaid >= debt.amount ? "paid" : totalPaid > 0 ? "partially_paid" : "pending",
           }
         }
-        return c
+        return debt
       }),
     )
   }
 
   const value = {
     transactions,
+    debts,
     categories,
     addTransaction,
     deleteTransaction,
     updateTransaction,
-    addCategory,
-    deleteCategory,
-    updateCategory,
-    addSubCategory,
-    deleteSubCategory,
-    updateSubCategory,
+    addDebt,
+    updateDebt,
+    deleteDebt,
+    addPayment,
+    deletePayment,
     totalIncome,
     totalExpenses,
     balance,
   }
 
-  console.log("FinanceProvider value", value.categories)
-
-  return(
-    <>
+  return (
     <SafeAreaProvider>
-   <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>
-   </SafeAreaProvider>
-   </>
+      <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>
+    </SafeAreaProvider>
   )
 }
-

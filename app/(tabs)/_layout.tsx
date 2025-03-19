@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, ListPlus, ChartBar as BarChart, Settings ,BookDashedIcon,HomeIcon} from 'lucide-react-native';
+import { Chrome as Home, ListPlus, ChartBar as BarChart, Settings ,BookDashedIcon,HomeIcon, HandCoins} from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
 
@@ -24,6 +24,14 @@ export default function TabLayout() {
           options={{
             title: 'Dashboard',
             tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
+          }}
+        />
+
+       <Tabs.Screen
+          name="debts"
+          options={{
+            title: 'Debts',
+            tabBarIcon: ({ color, size }) => <HandCoins color={color} size={size} />,
           }}
         />
 

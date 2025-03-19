@@ -21,7 +21,7 @@ export type ExpenseCategory = {
     subCategoryId?: string
   }
   
-  type FinanceContextType = {
+ export type FinanceContextType = {
     transactions: Transaction[]
     categories: ExpenseCategory[]
     addTransaction: (transaction: Omit<Transaction, "id">) => void

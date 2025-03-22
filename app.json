@@ -35,7 +35,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "01501764-cd15-46c2-8ab0-ea612a704e9f"
+        "projectId": "ad69f882-38f7-42bd-8873-411e68274d2d"
+      },
+      "router": {
+        "origin": false
       }
     },
     "plugins": [

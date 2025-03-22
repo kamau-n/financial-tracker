@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "build:preview": "eas build --platform android --profile preview --local",
+    "build:preview": "TODAY=$(date \"+%Y-%m-%d_%H-%M-%S\"); eas build --platform android --profile preview --local  --output ./build/preview/fintrack-$TODAY.apk",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",

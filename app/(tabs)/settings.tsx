@@ -159,7 +159,11 @@ export default function Settings() {
           </View>
         </View>
 
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <View style={styles.section}>
+        <Text style={styles.version}>Version 0.0.3</Text>
+
+        
+        </View>
       </ScrollView>
     </SafeAreaView>
   )

@@ -27,13 +27,7 @@ export default function TabLayout() {
           }}
         />
 
-       <Tabs.Screen
-          name="debts"
-          options={{
-            title: 'Debts',
-            tabBarIcon: ({ color, size }) => <HandCoins color={color} size={size} />,
-          }}
-        />
+   
 
         <Tabs.Screen
           name="transactions"
@@ -43,7 +37,19 @@ export default function TabLayout() {
           }}
         />
 
+    
+     
+
+
         <Tabs.Screen
+          name="debt"
+          options={{
+            title: 'Debts',
+            tabBarIcon: ({ color, size }) => <HandCoins color={color} size={size} />,
+          }}
+        />
+
+         <Tabs.Screen
           name="reports"
           options={{
             title: 'Reports',
@@ -51,14 +57,18 @@ export default function TabLayout() {
           }}
         />
 
-        <Tabs.Screen
+
+         <Tabs.Screen
           name="settings"
           options={{
             title: 'Settings',
             tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
           }}
         />
+
       </Tabs>
+
+      
     </>
   );
 }

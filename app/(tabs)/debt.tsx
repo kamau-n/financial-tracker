@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native"
-import { Plus, ArrowRight, ArrowLeft, Trash2, Calendar } from "lucide-react-native"
+import { Plus, ArrowRight, Calendar, ChevronRight, Check, CircleAlert as AlertCircle } from "lucide-react-native"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useTheme } from "../context/ThemeContext"
 import { useFinance } from "../context/FinanceContext"
@@ -85,6 +85,13 @@ export default function Debts() {
     return debt.amount - totalPaid
   }
 
+  const getStatusColor = (debt: Debt) => {
+    const remaining = calculateRemainingAmount(debt)
+    if (remaining <= 0) return colors.success
+    if (debt.dueDate && new Date(debt.dueDate) < new Date()) return colors.danger
+    return colors.warning
+  }
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -111,6 +118,136 @@ export default function Debts() {
       borderRadius: 12,
       padding: 16,
       marginBottom: 24,
+    },
+    debtList: {
+      marginTop: 8,
+    },
+    debtItem: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    debtItemSelected: {
+      backgroundColor: colors.primary + "10",
+    },
+    debtInfo: {
+      flex: 1,
+    },
+    personName: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    amount: {
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    debtMeta: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 4,
+    },
+    debtMetaText: {
+      fontSize: 14,
+      color: colors.text + "99",
+      marginRight: 12,
+    },
+    statusIndicator: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 8,
+    },
+    detailsContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    detailsHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    detailsTitle: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    detailsAmount: {
+      fontSize: 24,
+      fontWeight: "bold",
+    },
+    detailsRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 12,
+    },
+    detailsLabel: {
+      fontSize: 16,
+      color: colors.text + "99",
+    },
+    detailsValue: {
+      fontSize: 16,
+      fontWeight: "500",
+      color: colors.text,
+    },
+    paymentsList: {
+      marginTop: 16,
+    },
+    paymentItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    paymentInfo: {
+      flex: 1,
+    },
+    paymentDate: {
+      fontSize: 14,
+      color: colors.text + "99",
+      marginBottom: 4,
+    },
+    paymentNote: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    paymentAmount: {
+      fontSize: 16,
+      fontWeight: "500",
+      color: colors.success,
+    },
+    addButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      padding: 16,
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    addButtonText: {
+      color: colors.card,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    noDebtsContainer: {
+      padding: 24,
+      alignItems: "center",
+      backgroundColor: colors.card,
+      borderRadius: 12,
+    },
+    noDebtsText: {
+      fontSize: 16,
+      color: colors.text + "80",
+      textAlign: "center",
+      marginBottom: 16,
     },
     inputContainer: {
       marginBottom: 16,
@@ -165,56 +302,6 @@ export default function Debts() {
     dateText: {
       fontSize: 16,
       color: colors.text,
-    },
-    addButton: {
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      padding: 16,
-      alignItems: "center",
-      marginBottom: 16,
-    },
-    addButtonText: {
-      color: colors.card,
-      fontSize: 16,
-      fontWeight: "600",
-    },
-    debtItem: {
-      backgroundColor: colors.card,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
-    },
-    debtHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      marginBottom: 8,
-    },
-    personName: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    amount: {
-      fontSize: 18,
-      fontWeight: "600",
-    },
-    debtDetails: {
-      marginTop: 8,
-    },
-    debtDescription: {
-      fontSize: 14,
-      color: colors.text + "99",
-      marginBottom: 4,
-    },
-    paymentsList: {
-      marginTop: 12,
-    },
-    paymentItem: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
     },
     actionButton: {
       backgroundColor: colors.primary,
@@ -391,60 +478,108 @@ export default function Debts() {
           </View>
         )}
 
-        {debts.map((debt) => (
-          <View key={debt.id} style={styles.debtItem}>
-            <View style={styles.debtHeader}>
-              <Text style={styles.personName}>{debt.personName}</Text>
-              <Text
-                style={[
-                  styles.amount,
-                  { color: debt.type === "lent" ? colors.success : colors.danger },
-                ]}
-              >
-                {debt.type === "lent" ? "+" : "-"} {formatCurrency(debt.amount)}
+        <View style={styles.debtList}>
+          {debts.length === 0 ? (
+            <View style={styles.noDebtsContainer}>
+              <AlertCircle size={48} color={colors.text + "80"} />
+              <Text style={styles.noDebtsText}>
+                You haven't recorded any debts yet. Add your first debt to start tracking.
               </Text>
             </View>
-
-            <Text style={styles.debtDescription}>{debt.description}</Text>
-            <Text style={styles.debtDescription}>Date: {formatDate(debt.date)}</Text>
-            {debt.dueDate && (
-              <Text style={styles.debtDescription}>Due: {formatDate(debt.dueDate)}</Text>
-            )}
-
-            <Text style={[styles.debtDescription, { fontWeight: "500" }]}>
-              Remaining: {formatCurrency(calculateRemainingAmount(debt))}
-            </Text>
-
-            {debt.payments.length > 0 && (
-              <View style={styles.paymentsList}>
-                <Text style={[styles.label, { marginBottom: 8 }]}>Payment History</Text>
-                {debt.payments.map((payment) => (
-                  <View key={payment.id} style={styles.paymentItem}>
-                    <View>
-                      <Text style={styles.debtDescription}>{formatDate(payment.date)}</Text>
-                      {payment.note && (
-                        <Text style={styles.debtDescription}>{payment.note}</Text>
-                      )}
-                    </View>
-                    <Text style={[styles.amount, { color: colors.success }]}>
-                      {formatCurrency(payment.amount)}
+          ) : (
+            debts.map((debt) => (
+              <View key={debt.id}>
+                <TouchableOpacity
+                  style={[
+                    styles.debtItem,
+                    selectedDebt?.id === debt.id && styles.debtItemSelected,
+                  ]}
+                  onPress={() => setSelectedDebt(selectedDebt?.id === debt.id ? null : debt)}
+                >
+                  <View style={styles.debtInfo}>
+                    <Text style={styles.personName}>{debt.personName}</Text>
+                    <Text
+                      style={[
+                        styles.amount,
+                        { color: debt.type === "lent" ? colors.success : colors.danger },
+                      ]}
+                    >
+                      {debt.type === "lent" ? "+" : "-"} {formatCurrency(debt.amount)}
                     </Text>
+                    <View style={styles.debtMeta}>
+                      <View
+                        style={[
+                          styles.statusIndicator,
+                          { backgroundColor: getStatusColor(debt) },
+                        ]}
+                      />
+                      <Text style={styles.debtMetaText}>
+                        Remaining: {formatCurrency(calculateRemainingAmount(debt))}
+                      </Text>
+                    </View>
                   </View>
-                ))}
-              </View>
-            )}
+                  <ChevronRight
+                    size={24}
+                    color={colors.text + "60"}
+                    style={{
+                      transform: [{ rotate: selectedDebt?.id === debt.id ? "90deg" : "0deg" }],
+                    }}
+                  />
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => {
-                setSelectedDebt(debt)
-                setShowPaymentForm(true)
-              }}
-            >
-              <Text style={styles.actionButtonText}>Add Payment</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+                {selectedDebt?.id === debt.id && (
+                  <View style={styles.detailsContainer}>
+                    <View style={styles.detailsRow}>
+                      <Text style={styles.detailsLabel}>Description</Text>
+                      <Text style={styles.detailsValue}>{debt.description || "No description"}</Text>
+                    </View>
+                    <View style={styles.detailsRow}>
+                      <Text style={styles.detailsLabel}>Date</Text>
+                      <Text style={styles.detailsValue}>{formatDate(debt.date)}</Text>
+                    </View>
+                    {debt.dueDate && (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Due Date</Text>
+                        <Text style={styles.detailsValue}>{formatDate(debt.dueDate)}</Text>
+                      </View>
+                    )}
+
+                    {debt.payments.length > 0 && (
+                      <View style={styles.paymentsList}>
+                        <Text style={[styles.detailsTitle, { marginBottom: 12 }]}>
+                          Payment History
+                        </Text>
+                        {debt.payments.map((payment) => (
+                          <View key={payment.id} style={styles.paymentItem}>
+                            <View style={styles.paymentInfo}>
+                              <Text style={styles.paymentDate}>{formatDate(payment.date)}</Text>
+                              {payment.note && (
+                                <Text style={styles.paymentNote}>{payment.note}</Text>
+                              )}
+                            </View>
+                            <Text style={styles.paymentAmount}>
+                              {formatCurrency(payment.amount)}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        setSelectedDebt(debt)
+                        setShowPaymentForm(true)
+                      }}
+                    >
+                      <Text style={styles.actionButtonText}>Add Payment</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          )}
+        </View>
 
         {showDatePicker && (
           <DateTimePicker

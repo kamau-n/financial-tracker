@@ -5,15 +5,70 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
+  Share,
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Moon, Sun, Smartphone } from "lucide-react-native";
+import { Moon, Sun, Smartphone, Download, Trash2 } from "lucide-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
 
 export default function Settings() {
   const { colors, theme, setTheme, isDark } = useTheme();
-  const { notificationSettings, updateNotificationSettings } = useFinance();
+  const { transactions, debts, budgets } = useFinance();
+
+  const handleClearData = () => {
+    Alert.alert(
+      "Clear All Data",
+      "Are you sure you want to clear all your data? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Clear Data",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.multiRemove([
+                "transactions",
+                "debts",
+                "budgets",
+                "categories",
+              ]);
+              Alert.alert(
+                "Success",
+                "All data has been cleared. Please restart the app."
+              );
+            } catch (error) {
+              Alert.alert("Error", "Failed to clear data");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleExportData = async () => {
+    try {
+      const data = {
+        transactions,
+        debts,
+        budgets,
+        exportDate: new Date().toISOString(),
+      };
+
+      const jsonStr = JSON.stringify(data, null, 2);
+      await Share.share({
+        message: jsonStr,
+        title: "FinTrack Data Export",
+      });
+    } catch (error) {
+      Alert.alert("Error", "Failed to export data");
+    }
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -94,6 +149,18 @@ export default function Settings() {
       color: colors.text + "80",
       marginTop: 24,
     },
+    actionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    actionButtonText: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    dangerText: {
+      color: colors.danger,
+    },
   });
 
   return (
@@ -148,36 +215,37 @@ export default function Settings() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Notifications</Text>
           <View style={styles.row}>
+            <Text style={styles.rowText}>Daily Summary</Text>
+            <Switch value={true} onValueChange={() => {}} />
+          </View>
+          <View style={styles.row}>
             <Text style={styles.rowText}>Budget Alerts</Text>
-            <Switch
-              value={notificationSettings.budgetAlerts}
-              onValueChange={(value) =>
-                updateNotificationSettings({
-                  ...notificationSettings,
-                  budgetAlerts: value,
-                })
-              }
-            />
+            <Switch value={true} onValueChange={() => {}} />
           </View>
-          <View style={[styles.row, styles.lastRow]}>
-            <Text
-              style={[
-                styles.rowText,
-                { fontSize: 14, color: colors.text + "99" },
-              ]}>
-              Get notified when you reach 70%, 90%, and 100% of your budget
-            </Text>
-          </View>
+          {/* <View style={[styles.row, styles.lastRow]}>
+            <Text style={styles.rowText}>Bill Reminders</Text>
+            <Switch value={false} onValueChange={() => {}} />
+          </View> */}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Data & Privacy</Text>
-          <View style={styles.row}>
-            <Text style={styles.rowText}>Export Data</Text>
-          </View>
-          <View style={[styles.row, styles.lastRow]}>
-            <Text style={styles.rowText}>Delete All Data</Text>
-          </View>
+          <TouchableOpacity style={styles.row} onPress={handleExportData}>
+            <View style={styles.actionButton}>
+              <Download size={20} color={colors.text} />
+              <Text style={styles.actionButtonText}>Export Data</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.row, styles.lastRow]}
+            onPress={handleClearData}>
+            <View style={styles.actionButton}>
+              <Trash2 size={20} color={colors.danger} />
+              <Text style={[styles.actionButtonText, styles.dangerText]}>
+                Delete All Data
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>

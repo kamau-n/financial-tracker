@@ -1,11 +1,10 @@
-"use client";
-
 import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { defaultCategories } from "../utils/categories";
+import { Alert } from "react-native";
 import type {
   ExpenseCategory,
   SubCategory,
@@ -13,10 +12,8 @@ import type {
   Debt,
   Payment,
   Budget,
-  NotificationSettings,
   FinanceContextType,
 } from "../utils/types";
-import { showNotification } from "../utils/notifications";
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
@@ -35,13 +32,48 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [debts, setDebts] = useState<Debt[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const [notificationSettings, setNotificationSettings] =
-    useState<NotificationSettings>({
-      budgetAlerts: true,
-    });
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [balance, setBalance] = useState(0);
+
+  // Check budget status and show alerts if needed
+  const checkBudgetStatus = (budget: Budget) => {
+    const spent = transactions
+      .filter((t) => {
+        const transactionDate = new Date(t.date);
+        const budgetStart = new Date(budget.startDate);
+        const budgetEnd = budget.endDate
+          ? new Date(budget.endDate)
+          : new Date();
+
+        return (
+          t.type === "expense" &&
+          t.categoryId === budget.categoryId &&
+          transactionDate >= budgetStart &&
+          transactionDate <= budgetEnd
+        );
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const percentage = (spent / budget.amount) * 100;
+    const category = categories.find((c) => c.id === budget.categoryId);
+
+    if (percentage >= 100) {
+      Alert.alert(
+        "Budget Exceeded",
+        `You have exceeded your budget for ${
+          category?.name || "this category"
+        }.\n\nBudget: ${budget.amount}\nSpent: ${spent}`
+      );
+    } else if (percentage >= 80) {
+      Alert.alert(
+        "Budget Warning",
+        `You have used ${percentage.toFixed(1)}% of your budget for ${
+          category?.name || "this category"
+        }.\n\nBudget: ${budget.amount}\nSpent: ${spent}`
+      );
+    }
+  };
 
   // Load data from AsyncStorage on mount
   useEffect(() => {
@@ -50,10 +82,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
         const storedTransactions = await AsyncStorage.getItem("transactions");
         const storedDebts = await AsyncStorage.getItem("debts");
         const storedBudgets = await AsyncStorage.getItem("budgets");
-        const storedSettings = await AsyncStorage.getItem(
-          "notificationSettings"
-        );
-        let storedCategories = await AsyncStorage.getItem("categories");
 
         if (storedTransactions) {
           setTransactions(JSON.parse(storedTransactions));
@@ -67,19 +95,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
           setBudgets(JSON.parse(storedBudgets));
         }
 
-        if (storedSettings) {
-          setNotificationSettings(JSON.parse(storedSettings));
-        }
-
-        if (storedCategories) {
-          setCategories(JSON.parse(storedCategories));
-        } else {
-          setCategories(defaultCategories);
-          await AsyncStorage.setItem(
-            "categories",
-            JSON.stringify(defaultCategories)
-          );
-        }
+        setCategories(defaultCategories);
+        await AsyncStorage.setItem(
+          "categories",
+          JSON.stringify(defaultCategories)
+        );
       } catch (error) {
         console.error("Error loading data:", error);
       }
@@ -87,81 +107,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
 
     loadData();
   }, []);
-
-  // Check budgets and send notifications
-  // useEffect(() => {
-  //   if (!notificationSettings.budgetAlerts) return;
-
-  //   const checkBudgets = () => {
-  //     budgets.forEach((budget) => {
-  //       const start = new Date(budget.startDate);
-  //       const end = budget.endDate ? new Date(budget.endDate) : new Date();
-  //       const now = new Date();
-
-  //       // Only check current budgets
-  //       if (now >= start && now <= end) {
-  //         const spent = transactions
-  //           .filter(
-  //             (t) =>
-  //               t.type === "expense" &&
-  //               t.categoryId === budget.categoryId &&
-  //               new Date(t.date) >= start &&
-  //               new Date(t.date) <= end
-  //           )
-  //           .reduce((sum, t) => sum + t.amount, 0);
-
-  //         const spentPercentage = (spent / budget.amount) * 100;
-  //         const category = categories.find((c) => c.id === budget.categoryId);
-
-  //         // Check thresholds and send notifications if not already sent for this threshold
-  //         if (
-  //           spentPercentage >= 100 &&
-  //           budget.lastNotificationThreshold !== 100
-  //         ) {
-  //           showNotification(
-  //             "Budget Alert",
-  //             `You've exceeded your budget for ${
-  //               category?.name
-  //             }! (${spentPercentage.toFixed(1)}%)`
-  //           );
-  //           updateBudget({ ...budget, lastNotificationThreshold: 100 });
-  //         } else if (
-  //           spentPercentage >= 90 &&
-  //           budget.lastNotificationThreshold !== 90
-  //         ) {
-  //           showNotification(
-  //             "Budget Alert",
-  //             `You're at 90% of your budget for ${category?.name}`
-  //           );
-  //           updateBudget({ ...budget, lastNotificationThreshold: 90 });
-  //         } else if (
-  //           spentPercentage >= 70 &&
-  //           budget.lastNotificationThreshold !== 70
-  //         ) {
-  //           showNotification(
-  //             "Budget Alert",
-  //             `You're at 70% of your budget for ${category?.name}`
-  //           );
-  //           updateBudget({ ...budget, lastNotificationThreshold: 70 });
-  //         }
-  //       }
-  //     });
-  //   };
-
-  //   // Check budgets immediately and set up interval
-  //   checkBudgets();
-  //   const interval = setInterval(checkBudgets, 1000 * 60 * 60); // Check every hour
-
-  //   return () => clearInterval(interval);
-  // }, [transactions, budgets, notificationSettings.budgetAlerts]);
-
-  // Save notification settings
-  useEffect(() => {
-    AsyncStorage.setItem(
-      "notificationSettings",
-      JSON.stringify(notificationSettings)
-    );
-  }, [notificationSettings]);
 
   // Calculate totals whenever transactions change
   useEffect(() => {
@@ -176,18 +121,36 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     setTotalExpenses(expenses);
     setBalance(income - expenses);
 
-    AsyncStorage.setItem("transactions", JSON.stringify(transactions));
+    AsyncStorage.setItem("transactions", JSON.stringify(transactions)).catch(
+      (error) => console.error("Error saving transactions:", error)
+    );
+
+    // Check all budgets when transactions change
+
+    console.log("am checking the budgets have changed");
+    budgets.forEach(checkBudgetStatus);
   }, [transactions]);
 
   // Save debts whenever they change
   useEffect(() => {
-    AsyncStorage.setItem("debts", JSON.stringify(debts));
+    AsyncStorage.setItem("debts", JSON.stringify(debts)).catch((error) =>
+      console.error("Error saving debts:", error)
+    );
   }, [debts]);
 
   // Save budgets whenever they change
   useEffect(() => {
-    AsyncStorage.setItem("budgets", JSON.stringify(budgets));
+    AsyncStorage.setItem("budgets", JSON.stringify(budgets)).catch((error) =>
+      console.error("Error saving budgets:", error)
+    );
   }, [budgets]);
+
+  // Save categories whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("categories", JSON.stringify(categories)).catch(
+      (error) => console.error("Error saving categories:", error)
+    );
+  }, [categories]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const newTransaction = {
@@ -198,7 +161,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    Alert.alert(
+      "Delete Transaction",
+      "Are you sure you want to delete this transaction?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setTransactions((prev) => prev.filter((t) => t.id !== id));
+          },
+        },
+      ]
+    );
   };
 
   const updateTransaction = (transaction: Transaction) => {
@@ -221,7 +200,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deleteDebt = (id: string) => {
-    setDebts((prev) => prev.filter((d) => d.id !== id));
+    Alert.alert(
+      "Delete Debt",
+      "Are you sure you want to delete this debt record?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setDebts((prev) => prev.filter((d) => d.id !== id));
+          },
+        },
+      ]
+    );
   };
 
   const addPayment = (debtId: string, payment: Omit<Payment, "id">) => {
@@ -256,30 +251,46 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deletePayment = (debtId: string, paymentId: string) => {
-    setDebts((prev) =>
-      prev.map((debt) => {
-        if (debt.id === debtId) {
-          const updatedPayments = debt.payments.filter(
-            (p) => p.id !== paymentId
-          );
-          const totalPaid = updatedPayments.reduce(
-            (sum, p) => sum + p.amount,
-            0
-          );
+    Alert.alert(
+      "Delete Payment",
+      "Are you sure you want to delete this payment?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setDebts((prev) =>
+              prev.map((debt) => {
+                if (debt.id === debtId) {
+                  const updatedPayments = debt.payments.filter(
+                    (p) => p.id !== paymentId
+                  );
+                  const totalPaid = updatedPayments.reduce(
+                    (sum, p) => sum + p.amount,
+                    0
+                  );
 
-          return {
-            ...debt,
-            payments: updatedPayments,
-            status:
-              totalPaid >= debt.amount
-                ? "paid"
-                : totalPaid > 0
-                ? "partially_paid"
-                : "pending",
-          };
-        }
-        return debt;
-      })
+                  return {
+                    ...debt,
+                    payments: updatedPayments,
+                    status:
+                      totalPaid >= debt.amount
+                        ? "paid"
+                        : totalPaid > 0
+                        ? "partially_paid"
+                        : "pending",
+                  };
+                }
+                return debt;
+              })
+            );
+          },
+        },
+      ]
     );
   };
 
@@ -289,18 +300,34 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
       id: Date.now().toString(),
     };
     setBudgets((prev) => [...prev, newBudget]);
+    // Check the new budget immediately
+    checkBudgetStatus(newBudget);
   };
 
   const updateBudget = (budget: Budget) => {
     setBudgets((prev) => prev.map((b) => (b.id === budget.id ? budget : b)));
+    // Check the updated budget immediately
+    checkBudgetStatus(budget);
   };
 
   const deleteBudget = (id: string) => {
-    setBudgets((prev) => prev.filter((b) => b.id !== id));
-  };
-
-  const updateNotificationSettings = (settings: NotificationSettings) => {
-    setNotificationSettings(settings);
+    Alert.alert(
+      "Delete Budget",
+      "Are you sure you want to delete this budget?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setBudgets((prev) => prev.filter((b) => b.id !== id));
+          },
+        },
+      ]
+    );
   };
 
   const value = {
@@ -308,7 +335,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     debts,
     budgets,
     categories,
-    notificationSettings,
     addTransaction,
     deleteTransaction,
     updateTransaction,
@@ -320,7 +346,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     addBudget,
     updateBudget,
     deleteBudget,
-    updateNotificationSettings,
     totalIncome,
     totalExpenses,
     balance,

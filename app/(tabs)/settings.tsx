@@ -1,10 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from "react-native"
-import { useTheme } from "../context/ThemeContext"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { Moon, Sun, Smartphone } from "lucide-react-native"
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+} from "react-native";
+import { useTheme } from "../context/ThemeContext";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Moon, Sun, Smartphone } from "lucide-react-native";
+import { useFinance } from "../context/FinanceContext";
 
 export default function Settings() {
-  const { colors, theme, setTheme, isDark } = useTheme()
+  const { colors, theme, setTheme, isDark } = useTheme();
+  const { notificationSettings, updateNotificationSettings } = useFinance();
 
   const styles = StyleSheet.create({
     container: {
@@ -85,7 +94,7 @@ export default function Settings() {
       color: colors.text + "80",
       marginTop: 24,
     },
-  })
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,10 +110,11 @@ export default function Settings() {
             <TouchableOpacity
               style={[
                 styles.themeButton,
-                theme === "light" ? styles.activeThemeButton : styles.inactiveThemeButton,
+                theme === "light"
+                  ? styles.activeThemeButton
+                  : styles.inactiveThemeButton,
               ]}
-              onPress={() => setTheme("light")}
-            >
+              onPress={() => setTheme("light")}>
               <Sun size={20} color={colors.text} />
               <Text style={styles.themeButtonText}>Light</Text>
             </TouchableOpacity>
@@ -112,10 +122,11 @@ export default function Settings() {
             <TouchableOpacity
               style={[
                 styles.themeButton,
-                theme === "dark" ? styles.activeThemeButton : styles.inactiveThemeButton,
+                theme === "dark"
+                  ? styles.activeThemeButton
+                  : styles.inactiveThemeButton,
               ]}
-              onPress={() => setTheme("dark")}
-            >
+              onPress={() => setTheme("dark")}>
               <Moon size={20} color={colors.text} />
               <Text style={styles.themeButtonText}>Dark</Text>
             </TouchableOpacity>
@@ -123,10 +134,11 @@ export default function Settings() {
             <TouchableOpacity
               style={[
                 styles.themeButton,
-                theme === "system" ? styles.activeThemeButton : styles.inactiveThemeButton,
+                theme === "system"
+                  ? styles.activeThemeButton
+                  : styles.inactiveThemeButton,
               ]}
-              onPress={() => setTheme("system")}
-            >
+              onPress={() => setTheme("system")}>
               <Smartphone size={20} color={colors.text} />
               <Text style={styles.themeButtonText}>System</Text>
             </TouchableOpacity>
@@ -136,16 +148,25 @@ export default function Settings() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Notifications</Text>
           <View style={styles.row}>
-            <Text style={styles.rowText}>Daily Summary</Text>
-            <Switch value={true} onValueChange={() => {}} />
-          </View>
-          <View style={styles.row}>
             <Text style={styles.rowText}>Budget Alerts</Text>
-            <Switch value={true} onValueChange={() => {}} />
+            <Switch
+              value={notificationSettings.budgetAlerts}
+              onValueChange={(value) =>
+                updateNotificationSettings({
+                  ...notificationSettings,
+                  budgetAlerts: value,
+                })
+              }
+            />
           </View>
           <View style={[styles.row, styles.lastRow]}>
-            <Text style={styles.rowText}>Bill Reminders</Text>
-            <Switch value={false} onValueChange={() => {}} />
+            <Text
+              style={[
+                styles.rowText,
+                { fontSize: 14, color: colors.text + "99" },
+              ]}>
+              Get notified when you reach 70%, 90%, and 100% of your budget
+            </Text>
           </View>
         </View>
 
@@ -160,11 +181,9 @@ export default function Settings() {
         </View>
 
         <View style={styles.section}>
-        <Text style={styles.version}>Version 0.0.3</Text>
-
-        
+          <Text style={styles.version}>Version 0.0.3</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }

@@ -4,7 +4,7 @@ import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { defaultCategories } from "../utils/categories";
 import type {
   ExpenseCategory,
@@ -13,8 +13,10 @@ import type {
   Debt,
   Payment,
   Budget,
+  NotificationSettings,
   FinanceContextType,
 } from "../utils/types";
+import { showNotification } from "../utils/notifications";
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
@@ -33,6 +35,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [debts, setDebts] = useState<Debt[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettings>({
+      budgetAlerts: true,
+    });
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [balance, setBalance] = useState(0);
@@ -44,6 +50,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
         const storedTransactions = await AsyncStorage.getItem("transactions");
         const storedDebts = await AsyncStorage.getItem("debts");
         const storedBudgets = await AsyncStorage.getItem("budgets");
+        const storedSettings = await AsyncStorage.getItem(
+          "notificationSettings"
+        );
         let storedCategories = await AsyncStorage.getItem("categories");
 
         if (storedTransactions) {
@@ -58,16 +67,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
           setBudgets(JSON.parse(storedBudgets));
         }
 
-        // if (storedCategories?.length < 0) {
-        //   console.log("i do have categories", storedCategories?.length);
-        //   setCategories(JSON.parse(storedCategories));
-        // } else {
-        setCategories(defaultCategories);
-        await AsyncStorage.setItem(
-          "categories",
-          JSON.stringify(defaultCategories)
-        );
-        //}
+        if (storedSettings) {
+          setNotificationSettings(JSON.parse(storedSettings));
+        }
+
+        if (storedCategories) {
+          setCategories(JSON.parse(storedCategories));
+        } else {
+          setCategories(defaultCategories);
+          await AsyncStorage.setItem(
+            "categories",
+            JSON.stringify(defaultCategories)
+          );
+        }
       } catch (error) {
         console.error("Error loading data:", error);
       }
@@ -75,6 +87,81 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
 
     loadData();
   }, []);
+
+  // Check budgets and send notifications
+  // useEffect(() => {
+  //   if (!notificationSettings.budgetAlerts) return;
+
+  //   const checkBudgets = () => {
+  //     budgets.forEach((budget) => {
+  //       const start = new Date(budget.startDate);
+  //       const end = budget.endDate ? new Date(budget.endDate) : new Date();
+  //       const now = new Date();
+
+  //       // Only check current budgets
+  //       if (now >= start && now <= end) {
+  //         const spent = transactions
+  //           .filter(
+  //             (t) =>
+  //               t.type === "expense" &&
+  //               t.categoryId === budget.categoryId &&
+  //               new Date(t.date) >= start &&
+  //               new Date(t.date) <= end
+  //           )
+  //           .reduce((sum, t) => sum + t.amount, 0);
+
+  //         const spentPercentage = (spent / budget.amount) * 100;
+  //         const category = categories.find((c) => c.id === budget.categoryId);
+
+  //         // Check thresholds and send notifications if not already sent for this threshold
+  //         if (
+  //           spentPercentage >= 100 &&
+  //           budget.lastNotificationThreshold !== 100
+  //         ) {
+  //           showNotification(
+  //             "Budget Alert",
+  //             `You've exceeded your budget for ${
+  //               category?.name
+  //             }! (${spentPercentage.toFixed(1)}%)`
+  //           );
+  //           updateBudget({ ...budget, lastNotificationThreshold: 100 });
+  //         } else if (
+  //           spentPercentage >= 90 &&
+  //           budget.lastNotificationThreshold !== 90
+  //         ) {
+  //           showNotification(
+  //             "Budget Alert",
+  //             `You're at 90% of your budget for ${category?.name}`
+  //           );
+  //           updateBudget({ ...budget, lastNotificationThreshold: 90 });
+  //         } else if (
+  //           spentPercentage >= 70 &&
+  //           budget.lastNotificationThreshold !== 70
+  //         ) {
+  //           showNotification(
+  //             "Budget Alert",
+  //             `You're at 70% of your budget for ${category?.name}`
+  //           );
+  //           updateBudget({ ...budget, lastNotificationThreshold: 70 });
+  //         }
+  //       }
+  //     });
+  //   };
+
+  //   // Check budgets immediately and set up interval
+  //   checkBudgets();
+  //   const interval = setInterval(checkBudgets, 1000 * 60 * 60); // Check every hour
+
+  //   return () => clearInterval(interval);
+  // }, [transactions, budgets, notificationSettings.budgetAlerts]);
+
+  // Save notification settings
+  useEffect(() => {
+    AsyncStorage.setItem(
+      "notificationSettings",
+      JSON.stringify(notificationSettings)
+    );
+  }, [notificationSettings]);
 
   // Calculate totals whenever transactions change
   useEffect(() => {
@@ -89,31 +176,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     setTotalExpenses(expenses);
     setBalance(income - expenses);
 
-    AsyncStorage.setItem("transactions", JSON.stringify(transactions)).catch(
-      (error) => console.error("Error saving transactions:", error)
-    );
+    AsyncStorage.setItem("transactions", JSON.stringify(transactions));
   }, [transactions]);
 
   // Save debts whenever they change
   useEffect(() => {
-    AsyncStorage.setItem("debts", JSON.stringify(debts)).catch((error) =>
-      console.error("Error saving debts:", error)
-    );
+    AsyncStorage.setItem("debts", JSON.stringify(debts));
   }, [debts]);
 
   // Save budgets whenever they change
   useEffect(() => {
-    AsyncStorage.setItem("budgets", JSON.stringify(budgets)).catch((error) =>
-      console.error("Error saving budgets:", error)
-    );
+    AsyncStorage.setItem("budgets", JSON.stringify(budgets));
   }, [budgets]);
-
-  // Save categories whenever they change
-  useEffect(() => {
-    AsyncStorage.setItem("categories", JSON.stringify(categories)).catch(
-      (error) => console.error("Error saving categories:", error)
-    );
-  }, [categories]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const newTransaction = {
@@ -225,11 +299,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     setBudgets((prev) => prev.filter((b) => b.id !== id));
   };
 
+  const updateNotificationSettings = (settings: NotificationSettings) => {
+    setNotificationSettings(settings);
+  };
+
   const value = {
     transactions,
     debts,
     budgets,
     categories,
+    notificationSettings,
     addTransaction,
     deleteTransaction,
     updateTransaction,
@@ -241,6 +320,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     addBudget,
     updateBudget,
     deleteBudget,
+    updateNotificationSettings,
     totalIncome,
     totalExpenses,
     balance,

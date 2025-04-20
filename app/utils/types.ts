@@ -28,6 +28,7 @@ export type Budget = {
   period: "monthly" | "yearly";
   startDate: string;
   endDate?: string;
+  lastNotificationThreshold?: number; // Track last notification sent
 };
 
 export type Debt = {
@@ -49,11 +50,17 @@ export type Payment = {
   note?: string;
 };
 
+export type NotificationSettings = {
+  budgetAlerts: boolean;
+  lastChecked?: string;
+};
+
 export type FinanceContextType = {
   transactions: Transaction[];
   debts: Debt[];
   budgets: Budget[];
   categories: ExpenseCategory[];
+  notificationSettings: NotificationSettings;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   deleteTransaction: (id: string) => void;
   updateTransaction: (transaction: Transaction) => void;
@@ -65,6 +72,7 @@ export type FinanceContextType = {
   addBudget: (budget: Omit<Budget, "id">) => void;
   updateBudget: (budget: Budget) => void;
   deleteBudget: (id: string) => void;
+  updateNotificationSettings: (settings: NotificationSettings) => void;
   totalIncome: number;
   totalExpenses: number;
   balance: number;

@@ -1,46 +1,54 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
-import { Plus, TrendingUp, TrendingDown, ArrowRight } from "lucide-react-native"
-import { useRouter } from "expo-router" // Import useRouter from expo-router
-import { useTheme } from "../context/ThemeContext"
-import { formatCurrency, getCurrentMonthYear } from "../utils/formatters"
-import TransactionItem from "../components/TransactionItem"
-import { useFinance } from "../context/FinanceContext"
-import Chart from "../components/Chart"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
-
+import { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import {
+  Plus,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+} from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { useTheme } from "../context/ThemeContext";
+import { formatCurrency, getCurrentMonthYear } from "../utils/formatters";
+import TransactionItem from "../components/TransactionItem";
+import { useFinance } from "../context/FinanceContext";
+import Chart from "../components/Chart";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+//import { BannerAdComponent } from "../utils/ads";
 
 const HomeScreen = () => {
- 
-  // Remove navigation prop
-  const { colors } = useTheme()
-  const { transactions, totalIncome, totalExpenses, balance } = useFinance()
-  const [period, setPeriod] = useState<"week" | "month" | "year">("month")
-  const router = useRouter() // Use Expo Router's useRouter hook
+  const { colors } = useTheme();
+  const { transactions, totalIncome, totalExpenses, balance } = useFinance();
+  const [period, setPeriod] = useState<"week" | "month" | "year">("month");
+  const router = useRouter();
 
   // Get recent transactions
   const recentTransactions = [...transactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5)
+    .slice(0, 5);
 
   const handleAddTransaction = () => {
-    router.push("transactions") // Use router.push instead of navigation.navigate
-  }
+    router.push("transactions");
+  };
 
   const handleViewAllTransactions = () => {
-    router.push("transactions")
-  }
+    router.push("transactions");
+  };
 
   const handleTransactionPress = (transaction) => {
-    // For editing a transaction, you can pass the ID as a parameter
     router.push({
       pathname: "Transactions",
       params: { editTransaction: transaction.id },
-    })
-  }
+    });
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -81,7 +89,7 @@ const HomeScreen = () => {
     },
     statIcon: {
       marginRight: 8,
-      backgroundColor: colors.card + "33", // Adding transparency
+      backgroundColor: colors.card + "33",
       padding: 4,
       borderRadius: 8,
     },
@@ -165,105 +173,149 @@ const HomeScreen = () => {
       textAlign: "center",
       marginBottom: 16,
     },
-  })
+    adContainer: {
+      alignItems: "center",
+      marginVertical: 10,
+    },
+  });
 
   return (
     <>
-    <StatusBar style="inverted" backgroundColor={colors.primary} />
-    <SafeAreaView style={styles.container}>
+      <StatusBar style="inverted" backgroundColor={colors.primary} />
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={styles.monthYear}>{getCurrentMonthYear()}</Text>
 
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.monthYear}>{getCurrentMonthYear()}</Text>
-
-          <View style={styles.balanceContainer}>
-            <Text style={styles.balanceLabel}>Current Balance</Text>
-            <Text style={styles.balanceAmount}>{formatCurrency(balance)}</Text>
-          </View>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <View style={styles.statIcon}>
-                <TrendingUp size={16} color={colors.card} />
-              </View>
-              <View>
-                <Text style={styles.statText}>Income</Text>
-                <Text style={[styles.statText, styles.statAmount]}>{formatCurrency(totalIncome)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.statItem}>
-              <View style={styles.statIcon}>
-                <TrendingDown size={16} color={colors.card} />
-              </View>
-              <View>
-                <Text style={styles.statText}>Expenses</Text>
-                <Text style={[styles.statText, styles.statAmount]}>{formatCurrency(totalExpenses)}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Expense Breakdown</Text>
-          </View>
-
-          <View style={styles.periodSelector}>
-            <TouchableOpacity
-              style={[styles.periodButton, period === "week" && styles.periodButtonActive]}
-              onPress={() => setPeriod("week")}
-            >
-              <Text style={[styles.periodButtonText, period === "week" && styles.periodButtonTextActive]}>Week</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.periodButton, period === "month" && styles.periodButtonActive]}
-              onPress={() => setPeriod("month")}
-            >
-              <Text style={[styles.periodButtonText, period === "month" && styles.periodButtonTextActive]}>Month</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.periodButton, period === "year" && styles.periodButtonActive]}
-              onPress={() => setPeriod("year")}
-            >
-              <Text style={[styles.periodButtonText, period === "year" && styles.periodButtonTextActive]}>Year</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Chart title="Expenses" type="expense" period={period} />
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
-            <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAllTransactions}>
-              <Text style={styles.viewAllText}>View All</Text>
-              <ArrowRight size={16} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-
-          {recentTransactions.length > 0 ? (
-            recentTransactions.map((transaction) => (
-              <TransactionItem key={transaction.id} transaction={transaction} onPress={handleTransactionPress} />
-            ))
-          ) : (
-            <View style={styles.noTransactionsContainer}>
-              <Text style={styles.noTransactionsText}>
-                You haven't recorded any transactions yet. Tap the + button to add one.
+            <View style={styles.balanceContainer}>
+              <Text style={styles.balanceLabel}>Current Balance</Text>
+              <Text style={styles.balanceAmount}>
+                {formatCurrency(balance)}
               </Text>
             </View>
-          )}
-        </View>
-      </ScrollView>
 
-      <TouchableOpacity style={styles.addButton} onPress={handleAddTransaction}>
-        <Plus size={24} color={colors.card} />
-      </TouchableOpacity>
-    </SafeAreaView>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <View style={styles.statIcon}>
+                  <TrendingUp size={16} color={colors.card} />
+                </View>
+                <View>
+                  <Text style={styles.statText}>Income</Text>
+                  <Text style={[styles.statText, styles.statAmount]}>
+                    {formatCurrency(totalIncome)}
+                  </Text>
+                </View>
+              </View>
 
+              <View style={styles.statItem}>
+                <View style={styles.statIcon}>
+                  <TrendingDown size={16} color={colors.card} />
+                </View>
+                <View>
+                  <Text style={styles.statText}>Expenses</Text>
+                  <Text style={[styles.statText, styles.statAmount]}>
+                    {formatCurrency(totalExpenses)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.content}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Expense Breakdown</Text>
+            </View>
+
+            <View style={styles.periodSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  period === "week" && styles.periodButtonActive,
+                ]}
+                onPress={() => setPeriod("week")}>
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    period === "week" && styles.periodButtonTextActive,
+                  ]}>
+                  Week
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  period === "month" && styles.periodButtonActive,
+                ]}
+                onPress={() => setPeriod("month")}>
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    period === "month" && styles.periodButtonTextActive,
+                  ]}>
+                  Month
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  period === "year" && styles.periodButtonActive,
+                ]}
+                onPress={() => setPeriod("year")}>
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    period === "year" && styles.periodButtonTextActive,
+                  ]}>
+                  Year
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Chart title="Expenses" type="expense" period={period} />
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Transactions</Text>
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={handleViewAllTransactions}>
+                <Text style={styles.viewAllText}>View All</Text>
+                <ArrowRight size={16} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {recentTransactions.length > 0 ? (
+              recentTransactions.map((transaction) => (
+                <TransactionItem
+                  key={transaction.id}
+                  transaction={transaction}
+                  onPress={handleTransactionPress}
+                />
+              ))
+            ) : (
+              <View style={styles.noTransactionsContainer}>
+                <Text style={styles.noTransactionsText}>
+                  You haven't recorded any transactions yet. Tap the + button to
+                  add one.
+                </Text>
+              </View>
+            )}
+
+            {/* <View style={styles.adContainer}>
+              <BannerAdComponent />
+            </View> */}
+          </View>
+        </ScrollView>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={handleAddTransaction}>
+          <Plus size={24} color={colors.card} />
+        </TouchableOpacity>
+      </SafeAreaView>
     </>
-  )
-}
+  );
+};
 
-export default HomeScreen
-
+export default HomeScreen;

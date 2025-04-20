@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { defaultCategories } from "../utils/categories";
 import { Alert } from "react-native";
+import { showNotification } from "../utils/notifications";
 import type {
   ExpenseCategory,
   SubCategory,
@@ -58,21 +59,75 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     const percentage = (spent / budget.amount) * 100;
     const category = categories.find((c) => c.id === budget.categoryId);
 
-    if (percentage >= 100) {
-      Alert.alert(
+    // Check if we've already notified for this threshold
+    const lastNotificationThreshold = budget.lastNotificationThreshold || 0;
+
+    if (percentage >= 100 && lastNotificationThreshold < 100) {
+      showNotification(
         "Budget Exceeded",
         `You have exceeded your budget for ${
           category?.name || "this category"
-        }.\n\nBudget: ${budget.amount}\nSpent: ${spent}`
+        }. Budget: $${budget.amount}, Spent: $${spent}`
       );
-    } else if (percentage >= 80) {
-      Alert.alert(
+      // Update the last notification threshold
+      updateBudget({
+        ...budget,
+        lastNotificationThreshold: 100,
+      });
+    } else if (
+      percentage >= 80 &&
+      percentage < 100 &&
+      lastNotificationThreshold < 80
+    ) {
+      showNotification(
         "Budget Warning",
         `You have used ${percentage.toFixed(1)}% of your budget for ${
           category?.name || "this category"
-        }.\n\nBudget: ${budget.amount}\nSpent: ${spent}`
+        }. Budget: $${budget.amount}, Spent: $${spent}`
       );
+      // Update the last notification threshold
+      updateBudget({
+        ...budget,
+        lastNotificationThreshold: 80,
+      });
     }
+  };
+
+  // Check debt due dates
+  const checkDebtDueDates = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    debts.forEach((debt) => {
+      if (debt.dueDate && debt.status !== "paid") {
+        const dueDate = new Date(debt.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+
+        if (dueDate.getTime() === today.getTime()) {
+          showNotification(
+            "Debt Due Today",
+            `Your ${debt.type === "borrowed" ? "debt to" : "loan to"} ${
+              debt.personName
+            } is due today. Amount: $${debt.amount}`
+          );
+        } else if (dueDate < today) {
+          showNotification(
+            "Overdue Debt",
+            `Your ${debt.type === "borrowed" ? "debt to" : "loan to"} ${
+              debt.personName
+            } is overdue. Amount: $${debt.amount}`
+          );
+        } else if (dueDate.getTime() === today.getTime() + 86400000) {
+          // Check for tomorrow
+          showNotification(
+            "Debt Due Tomorrow",
+            `Your ${debt.type === "borrowed" ? "debt to" : "loan to"} ${
+              debt.personName
+            } is due tomorrow. Amount: $${debt.amount}`
+          );
+        }
+      }
+    });
   };
 
   // Load data from AsyncStorage on mount
@@ -108,6 +163,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     loadData();
   }, []);
 
+  // Check notifications daily
+  useEffect(() => {
+    const checkNotifications = () => {
+      checkDebtDueDates();
+      budgets.forEach(checkBudgetStatus);
+    };
+
+    // Check immediately on mount
+    checkNotifications();
+
+    // Set up daily check
+    const interval = setInterval(checkNotifications, 86400000); // 24 hours
+
+    return () => clearInterval(interval);
+  }, [budgets, debts, transactions]);
+
   // Calculate totals whenever transactions change
   useEffect(() => {
     const income = transactions
@@ -126,8 +197,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     );
 
     // Check all budgets when transactions change
-
-    console.log("am checking the budgets have changed");
     budgets.forEach(checkBudgetStatus);
   }, [transactions]);
 
@@ -298,6 +367,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     const newBudget = {
       ...budget,
       id: Date.now().toString(),
+      lastNotificationThreshold: 0,
     };
     setBudgets((prev) => [...prev, newBudget]);
     // Check the new budget immediately

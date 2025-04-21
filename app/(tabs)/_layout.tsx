@@ -59,21 +59,21 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="reports"
-          options={{
-            title: "Reports",
-            tabBarIcon: ({ color, size }) => (
-              <BarChart color={color} size={size} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
           name="debt"
           options={{
             title: "Debts",
             tabBarIcon: ({ color, size }) => (
               <HandCoins color={color} size={size} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="reports"
+          options={{
+            title: "Reports",
+            tabBarIcon: ({ color, size }) => (
+              <BarChart color={color} size={size} />
             ),
           }}
         />

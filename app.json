@@ -19,7 +19,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "co.ke.awesome.financeapp"
+      "bundleIdentifier": "co.ke.awesome.financeapp",
+      "infoPlist": {
+        "NSUserNotificationAlertUsageDescription": "This app uses notifications to keep you updated on your finances."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,22 +30,33 @@
         "backgroundColor": "#6366f1"
       },
       "package": "co.ke.awesome.financeapp",
+      "googleMobileAdsAppId": "ca-app-pub-1595924632810821~4873351440",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
     "extra": {
-      "eas": {
-        "projectId": "ad69f882-38f7-42bd-8873-411e68274d2d"
-      },
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "01501764-cd15-46c2-8ab0-ea612a704e9f"
       }
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#6366f1",
+          "sounds": []
+        }
+      ]
     ],
     "runtimeVersion": "1.0.0"
   }

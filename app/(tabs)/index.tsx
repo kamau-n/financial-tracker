@@ -22,7 +22,7 @@ import { useFinance } from "../context/FinanceContext";
 import Chart from "../components/Chart";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-//import { BannerAdComponent } from "../utils/ads";
+import { BannerAdComponent } from "../utils/ads";
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -176,6 +176,7 @@ const HomeScreen = () => {
     adContainer: {
       alignItems: "center",
       marginVertical: 10,
+      backgroundColor: colors.background,
     },
   });
 
@@ -302,9 +303,9 @@ const HomeScreen = () => {
               </View>
             )}
 
-            {/* <View style={styles.adContainer}>
-              <BannerAdComponent />
-            </View> */}
+            <View style={styles.adContainer}>
+              {/* <BannerAdComponent /> */}
+            </View>
           </View>
         </ScrollView>
 

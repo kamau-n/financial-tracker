@@ -19,6 +19,7 @@ import {
   Download,
   Trash2,
   Plus,
+  Check,
 } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
@@ -38,6 +39,12 @@ const CURRENCIES = [
   { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
 ];
 
+const THEMES = [
+  { id: "light", name: "Light", Icon: Sun },
+  { id: "dark", name: "Dark", Icon: Moon },
+  { id: "system", name: "System", Icon: Smartphone },
+];
+
 export default function Settings() {
   const { colors, theme, setTheme } = useTheme();
   const { transactions, debts, budgets } = useFinance();
@@ -45,6 +52,7 @@ export default function Settings() {
   const [dailySummary, setDailySummary] = useState(false);
   const [budgetAlerts, setBudgetAlerts] = useState(false);
   const [showCustomCurrencyModal, setShowCustomCurrencyModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
   const [customCurrency, setCustomCurrency] = useState({
     code: "",
     symbol: "",
@@ -96,7 +104,6 @@ export default function Settings() {
     };
 
     try {
-      // Add to local storage
       const storedCurrencies = await AsyncStorage.getItem("customCurrencies");
       const customCurrencies = storedCurrencies
         ? JSON.parse(storedCurrencies)
@@ -107,7 +114,6 @@ export default function Settings() {
         JSON.stringify(customCurrencies)
       );
 
-      // Set as selected currency
       await handleCurrencyChange(newCurrency);
       setShowCustomCurrencyModal(false);
       setCustomCurrency({ code: "", symbol: "", name: "" });
@@ -226,31 +232,23 @@ export default function Settings() {
       color: colors.text,
       marginBottom: 16,
     },
-    themeButtons: {
-      flexDirection: "row",
-      gap: 8,
-    },
     themeButton: {
-      flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      padding: 12,
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: colors.background,
       borderRadius: 8,
-      borderWidth: 2,
-      gap: 8,
-    },
-    activeThemeButton: {
-      backgroundColor: colors.primary + "20",
-      borderColor: colors.primary,
-    },
-    inactiveThemeButton: {
-      borderColor: colors.border,
+      marginBottom: 8,
     },
     themeButtonText: {
       fontSize: 16,
       color: colors.text,
-      fontWeight: "500",
+      marginLeft: 12,
+    },
+    themeIconContainer: {
+      flexDirection: "row",
+      alignItems: "center",
     },
     row: {
       flexDirection: "row",
@@ -382,6 +380,9 @@ export default function Settings() {
     },
   });
 
+  const currentTheme = THEMES.find((t) => t.id === theme);
+  const ThemeIcon = currentTheme?.Icon || Sun;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
@@ -392,43 +393,15 @@ export default function Settings() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Theme</Text>
-          <View style={styles.themeButtons}>
-            <TouchableOpacity
-              style={[
-                styles.themeButton,
-                theme === "light"
-                  ? styles.activeThemeButton
-                  : styles.inactiveThemeButton,
-              ]}
-              onPress={() => setTheme("light")}>
-              <Sun size={20} color={colors.text} />
-              <Text style={styles.themeButtonText}>Light</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.themeButton,
-                theme === "dark"
-                  ? styles.activeThemeButton
-                  : styles.inactiveThemeButton,
-              ]}
-              onPress={() => setTheme("dark")}>
-              <Moon size={20} color={colors.text} />
-              <Text style={styles.themeButtonText}>Dark</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.themeButton,
-                theme === "system"
-                  ? styles.activeThemeButton
-                  : styles.inactiveThemeButton,
-              ]}
-              onPress={() => setTheme("system")}>
-              <Smartphone size={20} color={colors.text} />
-              <Text style={styles.themeButtonText}>System</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.themeButton}
+            onPress={() => setShowThemeModal(true)}>
+            <View style={styles.themeIconContainer}>
+              <ThemeIcon size={20} color={colors.text} />
+              <Text style={styles.themeButtonText}>{currentTheme?.name}</Text>
+            </View>
+            <Text style={{ color: colors.text + "80" }}>Change</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -448,7 +421,7 @@ export default function Settings() {
                   {currency.name} ({currency.code})
                 </Text>
                 {selectedCurrency.code === currency.code && (
-                  <Text style={{ color: colors.primary }}>✓</Text>
+                  <Check size={20} color={colors.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -495,6 +468,43 @@ export default function Settings() {
             <Text style={styles.dangerButtonText}>Clear All Data</Text>
           </TouchableOpacity>
         </View>
+
+        <Modal
+          visible={showThemeModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowThemeModal(false)}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Theme</Text>
+              {THEMES.map((themeOption) => {
+                const Icon = themeOption.Icon;
+                return (
+                  <TouchableOpacity
+                    key={themeOption.id}
+                    style={[
+                      styles.themeButton,
+                      theme === themeOption.id && styles.selectedCurrency,
+                    ]}
+                    onPress={() => {
+                      setTheme(themeOption.id);
+                      setShowThemeModal(false);
+                    }}>
+                    <View style={styles.themeIconContainer}>
+                      <Icon size={20} color={colors.text} />
+                      <Text style={styles.themeButtonText}>
+                        {themeOption.name}
+                      </Text>
+                    </View>
+                    {theme === themeOption.id && (
+                      <Check size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </Modal>
 
         <Modal
           visible={showCustomCurrencyModal}

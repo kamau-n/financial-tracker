@@ -22,18 +22,44 @@ import { useFinance } from "../context/FinanceContext";
 import Chart from "../components/Chart";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-// import { BannerAdComponent } from "../utils/ads";
+//import BannerAdComponent from "../utils/ads";
 
 const HomeScreen = () => {
   const { colors } = useTheme();
   const { transactions, totalIncome, totalExpenses, balance } = useFinance();
-  const [period, setPeriod] = useState<"week" | "month" | "year">("month");
+  const [period, setPeriod] = useState<"day" | "week" | "month" | "year">(
+    "day"
+  );
   const router = useRouter();
 
-  // Get recent transactions
-  const recentTransactions = [...transactions]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
+  // Filter transactions based on selected period
+  const getFilteredTransactions = () => {
+    const now = new Date();
+    return transactions.filter((t) => {
+      const transactionDate = new Date(t.date);
+
+      if (period === "day") {
+        return (
+          transactionDate.getDate() === now.getDate() &&
+          transactionDate.getMonth() === now.getMonth() &&
+          transactionDate.getFullYear() === now.getFullYear()
+        );
+      } else if (period === "week") {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        return transactionDate >= weekAgo;
+      } else if (period === "month") {
+        return (
+          transactionDate.getMonth() === now.getMonth() &&
+          transactionDate.getFullYear() === now.getFullYear()
+        );
+      } else {
+        return transactionDate.getFullYear() === now.getFullYear();
+      }
+    });
+  };
+
+  const filteredTransactions = getFilteredTransactions();
 
   const handleAddTransaction = () => {
     router.push("transactions");
@@ -228,6 +254,21 @@ const HomeScreen = () => {
             </View>
 
             <View style={styles.periodSelector}>
+              {/* <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  period === "day" && styles.periodButtonActive,
+                ]}
+                onPress={() => setPeriod("day")}>
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    period === "day" && styles.periodButtonTextActive,
+                  ]}>
+                  Day
+                </Text>
+              </TouchableOpacity> */}
+
               <TouchableOpacity
                 style={[
                   styles.periodButton,
@@ -286,8 +327,8 @@ const HomeScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((transaction) => (
+            {filteredTransactions.length > 0 ? (
+              filteredTransactions.map((transaction) => (
                 <TransactionItem
                   key={transaction.id}
                   transaction={transaction}
@@ -297,8 +338,7 @@ const HomeScreen = () => {
             ) : (
               <View style={styles.noTransactionsContainer}>
                 <Text style={styles.noTransactionsText}>
-                  You haven't recorded any transactions yet. Tap the + button to
-                  add one.
+                  No transactions found for this period.
                 </Text>
               </View>
             )}

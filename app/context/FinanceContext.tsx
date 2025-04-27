@@ -41,6 +41,90 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [balance, setBalance] = useState(0);
 
+  // Load data from AsyncStorage on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [
+          storedTransactions,
+          storedDebts,
+          storedBudgets,
+          storedCategories,
+        ] = await Promise.all([
+          AsyncStorage.getItem("transactions"),
+          AsyncStorage.getItem("debts"),
+          AsyncStorage.getItem("budgets"),
+          AsyncStorage.getItem("categories"),
+        ]);
+
+        if (storedTransactions) {
+          setTransactions(JSON.parse(storedTransactions));
+        }
+
+        if (storedDebts) {
+          setDebts(JSON.parse(storedDebts));
+        }
+
+        if (storedBudgets) {
+          setBudgets(JSON.parse(storedBudgets));
+        }
+
+        if (storedCategories) {
+          setCategories(JSON.parse(storedCategories));
+        } else {
+          setCategories(defaultCategories);
+          await AsyncStorage.setItem(
+            "categories",
+            JSON.stringify(defaultCategories)
+          );
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Save transactions whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("transactions", JSON.stringify(transactions)).catch(
+      (error) => console.error("Error saving transactions:", error)
+    );
+
+    const income = transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expenses = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    setTotalIncome(income);
+    setTotalExpenses(expenses);
+    setBalance(income - expenses);
+  }, [transactions]);
+
+  // Save debts whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("debts", JSON.stringify(debts)).catch((error) =>
+      console.error("Error saving debts:", error)
+    );
+  }, [debts]);
+
+  // Save budgets whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("budgets", JSON.stringify(budgets)).catch((error) =>
+      console.error("Error saving budgets:", error)
+    );
+  }, [budgets]);
+
+  // Save categories whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("categories", JSON.stringify(categories)).catch(
+      (error) => console.error("Error saving categories:", error)
+    );
+  }, [categories]);
+
   // Check budget status and show alerts if needed
   const checkBudgetStatus = async (budget: Budget) => {
     const spent = transactions
@@ -136,39 +220,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Load data from AsyncStorage on mount
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const storedTransactions = await AsyncStorage.getItem("transactions");
-        const storedDebts = await AsyncStorage.getItem("debts");
-        const storedBudgets = await AsyncStorage.getItem("budgets");
-
-        if (storedTransactions) {
-          setTransactions(JSON.parse(storedTransactions));
-        }
-
-        if (storedDebts) {
-          setDebts(JSON.parse(storedDebts));
-        }
-
-        if (storedBudgets) {
-          setBudgets(JSON.parse(storedBudgets));
-        }
-
-        setCategories(defaultCategories);
-        await AsyncStorage.setItem(
-          "categories",
-          JSON.stringify(defaultCategories)
-        );
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
-    };
-
-    loadData();
-  }, []);
-
   // Check notifications daily
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -186,48 +237,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return () => clearInterval(interval);
   }, [budgets, debts, transactions]);
-
-  // Calculate totals whenever transactions change
-  useEffect(() => {
-    const income = transactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expenses = transactions
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    setTotalIncome(income);
-    setTotalExpenses(expenses);
-    setBalance(income - expenses);
-
-    AsyncStorage.setItem("transactions", JSON.stringify(transactions)).catch(
-      (error) => console.error("Error saving transactions:", error)
-    );
-
-    // Check all budgets when transactions change
-    budgets.forEach(checkBudgetStatus);
-  }, [transactions]);
-
-  // Save debts whenever they change
-  useEffect(() => {
-    AsyncStorage.setItem("debts", JSON.stringify(debts)).catch((error) =>
-      console.error("Error saving debts:", error)
-    );
-  }, [debts]);
-
-  // Save budgets whenever they change
-  useEffect(() => {
-    AsyncStorage.setItem("budgets", JSON.stringify(budgets)).catch((error) =>
-      console.error("Error saving budgets:", error)
-    );
-  }, [budgets]);
-
-  // Save categories whenever they change
-  useEffect(() => {
-    AsyncStorage.setItem("categories", JSON.stringify(categories)).catch(
-      (error) => console.error("Error saving categories:", error)
-    );
-  }, [categories]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const newTransaction = {

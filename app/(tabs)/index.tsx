@@ -22,7 +22,7 @@ import { useFinance } from "../context/FinanceContext";
 import Chart from "../components/Chart";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
- import { BannerAdComponent } from "../utils/ads";
+// import { BannerAdComponent } from "../utils/ads";
 
 const HomeScreen = () => {
   const { colors } = useTheme();

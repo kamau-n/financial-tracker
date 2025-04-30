@@ -23,6 +23,7 @@ import Chart from "../components/Chart";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 //import BannerAdComponent from "../utils/ads";
+import { Transaction } from "../utils/types";
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -69,10 +70,10 @@ const HomeScreen = () => {
     router.push("transactions");
   };
 
-  const handleTransactionPress = (transaction) => {
+  const handleTransactionPress = (transaction: Partial<Transaction>) => {
     router.push({
       pathname: "Transactions",
-      params: { editTransaction: transaction.id },
+      params: { editTransaction: transaction?.id },
     });
   };
 
@@ -217,7 +218,7 @@ const HomeScreen = () => {
             <View style={styles.balanceContainer}>
               <Text style={styles.balanceLabel}>Current Balance</Text>
               <Text style={styles.balanceAmount}>
-                {formatCurrency(balance)}
+                {balance ?? formatCurrency(balance)}
               </Text>
             </View>
 
@@ -229,7 +230,7 @@ const HomeScreen = () => {
                 <View>
                   <Text style={styles.statText}>Income</Text>
                   <Text style={[styles.statText, styles.statAmount]}>
-                    {formatCurrency(totalIncome)}
+                    {balance ?? formatCurrency(totalIncome)}
                   </Text>
                 </View>
               </View>
@@ -241,7 +242,7 @@ const HomeScreen = () => {
                 <View>
                   <Text style={styles.statText}>Expenses</Text>
                   <Text style={[styles.statText, styles.statAmount]}>
-                    {formatCurrency(totalExpenses)}
+                    {balance ?? formatCurrency(totalExpenses)}
                   </Text>
                 </View>
               </View>

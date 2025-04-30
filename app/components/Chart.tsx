@@ -1,72 +1,72 @@
-import type React from "react"
-import { View, Text, StyleSheet, Dimensions } from "react-native"
-import { PieChart } from "react-native-chart-kit"
-import { useTheme } from "../context/ThemeContext"
-import { useFinance } from "../context/FinanceContext"
-import { formatCurrency } from "../utils/formatters"
+import type React from "react";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { PieChart } from "react-native-chart-kit";
+import { useTheme } from "../context/ThemeContext";
+import { useFinance } from "../context/FinanceContext";
+import { formatCurrency } from "../utils/formatters";
 
 interface ChartProps {
-  title: string
-  type: "income" | "expense"
-  period: "week" | "month" | "year"
+  title: string;
+  type: "income" | "expense";
+  period: "week" | "month" | "year" | "day";
 }
 
 const Chart: React.FC<ChartProps> = ({ title, type, period }) => {
-  const { colors, isDark } = useTheme()
-  const { transactions, categories } = useFinance()
+  const { colors, isDark } = useTheme();
+  const { transactions, categories } = useFinance();
 
   // Filter transactions by type and period
   const filteredTransactions = transactions.filter((t) => {
-    if (t.type !== type) return false
+    if (t.type !== type) return false;
 
-    const transactionDate = new Date(t.date)
-    const now = new Date()
+    const transactionDate = new Date(t.date);
+    const now = new Date();
 
     if (period === "week") {
-      const weekAgo = new Date()
-      weekAgo.setDate(now.getDate() - 7)
-      return transactionDate >= weekAgo
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+      return transactionDate >= weekAgo;
     } else if (period === "month") {
-      const monthAgo = new Date()
-      monthAgo.setMonth(now.getMonth() - 1)
-      return transactionDate >= monthAgo
+      const monthAgo = new Date();
+      monthAgo.setMonth(now.getMonth() - 1);
+      return transactionDate >= monthAgo;
     } else if (period === "year") {
-      const yearAgo = new Date()
-      yearAgo.setFullYear(now.getFullYear() - 1)
-      return transactionDate >= yearAgo
+      const yearAgo = new Date();
+      yearAgo.setFullYear(now.getFullYear() - 1);
+      return transactionDate >= yearAgo;
     }
 
-    return true
-  })
+    return true;
+  });
 
   // Group transactions by category
-  const categoryTotals: Record<string, number> = {}
+  const categoryTotals: Record<string, number> = {};
 
   filteredTransactions.forEach((transaction) => {
     if (transaction.categoryId) {
       if (!categoryTotals[transaction.categoryId]) {
-        categoryTotals[transaction.categoryId] = 0
+        categoryTotals[transaction.categoryId] = 0;
       }
-      categoryTotals[transaction.categoryId] += transaction.amount
+      categoryTotals[transaction.categoryId] += transaction.amount;
     }
-  })
+  });
 
   // Prepare data for pie chart
   const chartData = Object.entries(categoryTotals)
     .map(([categoryId, amount]) => {
-      const category = categories.find((c) => c.id === categoryId)
+      const category = categories.find((c) => c.id === categoryId);
       return {
         name: category?.name || "Unknown",
         amount,
         color: category?.color || "#999999",
         legendFontColor: colors.text,
         legendFontSize: 12,
-      }
+      };
     })
-    .sort((a, b) => b.amount - a.amount)
+    .sort((a, b) => b.amount - a.amount);
 
   // Calculate total
-  const total = chartData.reduce((sum, item) => sum + item.amount, 0)
+  const total = chartData.reduce((sum, item) => sum + item.amount, 0);
 
   const styles = StyleSheet.create({
     container: {
@@ -139,13 +139,13 @@ const Chart: React.FC<ChartProps> = ({ title, type, period }) => {
       color: colors.text + "80",
       marginLeft: 4,
     },
-  })
+  });
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.total}>{formatCurrency(total)}</Text>
+        <Text style={styles.total}>{total ?? formatCurrency(total)}</Text>
       </View>
 
       {chartData.length > 0 ? (
@@ -173,11 +173,17 @@ const Chart: React.FC<ChartProps> = ({ title, type, period }) => {
           <View style={styles.legendContainer}>
             {chartData.map((item, index) => (
               <View key={index} style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: item.color }]} />
+                <View
+                  style={[styles.legendColor, { backgroundColor: item.color }]}
+                />
                 <Text style={styles.legendText}>{item.name}</Text>
-                <Text style={styles.legendAmount}>{formatCurrency(item.amount)}</Text>
+                <Text style={styles.legendAmount}>
+                  {item.name ?? formatCurrency(item.amount)}
+                </Text>
                 <Text style={styles.legendPercentage}>
-                  {total > 0 ? `${Math.round((item.amount / total) * 100)}%` : "0%"}
+                  {total > 0
+                    ? `${Math.round((item.amount / total) * 100)}%`
+                    : "0%"}
                 </Text>
               </View>
             ))}
@@ -185,12 +191,13 @@ const Chart: React.FC<ChartProps> = ({ title, type, period }) => {
         </>
       ) : (
         <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No data available for this period</Text>
+          <Text style={styles.noDataText}>
+            No data available for this period
+          </Text>
         </View>
       )}
     </View>
-  )
-}
+  );
+};
 
-export default Chart
-
+export default Chart;
